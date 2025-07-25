@@ -3,7 +3,7 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.keras.preprocessing import image
 import cv2
-
+import os
 # Load your trained model
 model = tf.keras.models.load_model("plant_disease_resnet.keras")
 
@@ -37,8 +37,11 @@ def predict_disease(img):
     return f"Prediction: {predicted_class}\nConfidence: {confidence}%"
 
 # Launch the Gradio interface
+
+
 gr.Interface(fn=predict_disease,
              inputs=gr.Image(type="pil"),
              outputs="text",
              title="🌿 Plant Disease Detector using ResNet",
-             description="Upload a plant leaf image to detect disease using a fine-tuned ResNet model.").launch()
+             description="Upload a plant leaf image to detect disease using a fine-tuned ResNet model."
+).launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 10000)))
