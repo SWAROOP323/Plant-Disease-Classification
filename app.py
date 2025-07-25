@@ -2,7 +2,6 @@ import gradio as gr
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras.preprocessing import image
-import os
 
 # Load your trained model
 model = tf.keras.models.load_model("plant_disease_resnet.keras")
@@ -35,15 +34,11 @@ def predict_disease(img):
     confidence = round(np.max(prediction) * 100, 2)
     return f"Prediction: {predicted_class}\nConfidence: {confidence}%"
 
-# Gradio Interface
-iface = gr.Interface(
+# Launch Gradio app
+gr.Interface(
     fn=predict_disease,
     inputs=gr.Image(type="pil"),
     outputs="text",
-    title="🌿 Plant Disease Detector using ResNet",
+    title="🌿 Plant Disease Detector",
     description="Upload a plant leaf image to detect disease using a fine-tuned ResNet model."
-)
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    iface.launch(server_name="0.0.0.0", server_port=port)
+).launch(server_name="0.0.0.0", server_port=10000)
