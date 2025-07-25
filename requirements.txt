@@ -1,6 +1,7 @@
-tensorflow
-gradio
-numpy
-Pillow
-opencv-python
-
+Flask==2.3.3         # or Streamlit if you're using that
+gunicorn==21.2.0
+tensorflow==2.15.0
+numpy==1.26.4
+pandas==2.2.2
+scikit-learn==1.5.1
+Pillow==10.3.0
