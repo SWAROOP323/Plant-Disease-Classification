@@ -2,12 +2,12 @@ import gradio as gr
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras.preprocessing import image
-import cv2
 import os
+
 # Load your trained model
 model = tf.keras.models.load_model("plant_disease_resnet.keras")
 
-# Define class labels based on your confusion matrix (in the same order)
+# Define class labels
 class_labels = [
     "Apple___Apple_scab", "Apple___Black_rot", "Apple___Cedar_apple_rust", "Apple___healthy",
     "Blueberry___healthy", "Cherry_(including_sour)___Powdery_mildew", "Cherry_(including_sour)___healthy",
@@ -22,26 +22,28 @@ class_labels = [
     "Tomato___Septoria_leaf_spot"
 ]
 
-# Image preprocessing function
+# Prediction function
 def predict_disease(img):
-    img = img.convert("RGB")  # Ensure 3 channels
-    img = img.resize((224, 224))  # Resize to match model input
+    img = img.convert("RGB")
+    img = img.resize((224, 224))
     img_array = image.img_to_array(img)
-    img_array = img_array / 255.0  # Normalize
+    img_array = img_array / 255.0
     img_array = np.expand_dims(img_array, axis=0)
 
     prediction = model.predict(img_array)
     predicted_class = class_labels[np.argmax(prediction)]
     confidence = round(np.max(prediction) * 100, 2)
-    
     return f"Prediction: {predicted_class}\nConfidence: {confidence}%"
 
-# Launch the Gradio interface
+# Gradio Interface
+iface = gr.Interface(
+    fn=predict_disease,
+    inputs=gr.Image(type="pil"),
+    outputs="text",
+    title="🌿 Plant Disease Detector using ResNet",
+    description="Upload a plant leaf image to detect disease using a fine-tuned ResNet model."
+)
 
-
-gr.Interface(fn=predict_disease,
-             inputs=gr.Image(type="pil"),
-             outputs="text",
-             title="🌿 Plant Disease Detector using ResNet",
-             description="Upload a plant leaf image to detect disease using a fine-tuned ResNet model."
-).launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 10000)))
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    iface.launch(server_name="0.0.0.0", server_port=port)
