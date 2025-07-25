@@ -2,6 +2,10 @@ services:
   - type: web
     name: plant-disease-classification
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
     pythonVersion: 3.10.14
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    plan: free
+    envVars:
+      - key: PORT
+        value: 10000
