@@ -1,4 +1,4 @@
-gradio
+gradio==5.0.2
 tensorflow==2.15.0
 numpy
 opencv-python
