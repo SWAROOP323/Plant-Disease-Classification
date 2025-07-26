@@ -1,50 +1,58 @@
-import gradio as gr
-import tensorflow as tf
-import numpy as np
-from tensorflow.keras.preprocessing import image
-from huggingface_hub import hf_hub_download
 import os
+from flask import Flask, request, render_template
+import tensorflow as tf
+from huggingface_hub import hf_hub_download
+from PIL import Image
+import numpy as np
 
-# Download model from Hugging Face if not exists
-model_path = hf_hub_download(
-    repo_id="SWAROOP323/plant-disease-predictor",
-    filename="plant_disease_resnet.keras"
-)
+app = Flask(__name__)
 
-# Load the model
-model = tf.keras.models.load_model(model_path)
+# Hugging Face repo details
+REPO_ID = "SWAROOP323/plant-disease-predictor"
 
-# Define class labels
-class_labels = [
-    "Apple___Apple_scab", "Apple___Black_rot", "Apple___Cedar_apple_rust", "Apple___healthy",
-    "Blueberry___healthy", "Cherry_(including_sour)___Powdery_mildew", "Cherry_(including_sour)___healthy",
-    "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot", "Corn_(maize)___Common_rust",
-    "Corn_(maize)___Northern_Leaf_Blight", "Corn_(maize)___healthy", "Grape___Black_rot",
-    "Grape___Esca_(Black_Measles)", "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)", "Grape___healthy",
-    "Orange___Haunglongbing_(Citrus_greening)", "Peach___Bacterial_spot", "Peach___healthy",
-    "Pepper,_bell___Bacterial_spot", "Pepper,_bell___healthy", "Potato___Early_blight",
-    "Potato___Late_blight", "Potato___healthy", "Raspberry___healthy", "Soybean___healthy",
-    "Squash___Powdery_mildew", "Strawberry___Leaf_scorch", "Strawberry___healthy",
-    "Tomato___Bacterial_spot", "Tomato___Early_blight", "Tomato___Late_blight", "Tomato___Leaf_Mold",
-    "Tomato___Septoria_leaf_spot"
-]
+# Download models dynamically
+RESNET_MODEL_PATH = hf_hub_download(repo_id=REPO_ID, filename="plant_disease_resnet.keras")
+VGG_FT_MODEL_PATH = hf_hub_download(repo_id=REPO_ID, filename="plant_disease_vgg_finetuned.keras")
 
-# Prediction function
-def predict_disease(img):
-    img = img.convert("RGB")
-    img = img.resize((224, 224))
-    img_array = image.img_to_array(img) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)
-    prediction = model.predict(img_array)
-    predicted_class = class_labels[np.argmax(prediction)]
-    confidence = round(np.max(prediction) * 100, 2)
-    return f"Prediction: {predicted_class}\nConfidence: {confidence}%"
+# Load models
+resnet_model = tf.keras.models.load_model(RESNET_MODEL_PATH)
+vgg_model = tf.keras.models.load_model(VGG_FT_MODEL_PATH)
 
-# Launch Gradio app
-gr.Interface(
-    fn=predict_disease,
-    inputs=gr.Image(type="pil"),
-    outputs="text",
-    title="🌿 Plant Disease Detector using ResNet",
-    description="Upload a plant leaf image to detect disease using a fine-tuned ResNet model."
-).launch()
+# Image preprocessing
+def preprocess_image(image):
+    img = image.resize((224, 224))
+    img_array = np.array(img) / 255.0
+    return np.expand_dims(img_array, axis=0)
+
+@app.route("/", methods=["GET", "POST"])
+def predict():
+    if request.method == "POST":
+        file = request.files['file']
+        if file:
+            img = Image.open(file.stream)
+            processed_img = preprocess_image(img)
+
+            # Predict using ResNet model
+            resnet_pred = resnet_model.predict(processed_img)
+            resnet_class = np.argmax(resnet_pred, axis=1)[0]
+
+            # Predict using Fine-tuned VGG model
+            vgg_pred = vgg_model.predict(processed_img)
+            vgg_class = np.argmax(vgg_pred, axis=1)[0]
+
+            return f"""
+                <h2>Prediction Results</h2>
+                <p><b>ResNet Model:</b> Class {resnet_class}</p>
+                <p><b>Fine-tuned VGG Model:</b> Class {vgg_class}</p>
+                <a href="/">Go Back</a>
+            """
+    return '''
+        <h1>Plant Disease Prediction</h1>
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="file">
+            <input type="submit" value="Predict">
+        </form>
+    '''
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
