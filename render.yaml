@@ -1,11 +1,7 @@
 services:
   - type: web
-    name: plant-disease-classification
+    name: plant-disease-detector
     env: python
-    pythonVersion: 3.10.14
+    plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: python app.py
-    plan: free
-    envVars:
-      - key: PORT
-        value: 10000
