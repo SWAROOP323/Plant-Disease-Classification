@@ -1,7 +1,10 @@
 services:
   - type: web
-    name: plant-disease-detector
+    name: plant-disease-predictor
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: python app.py
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python app.py"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10
