@@ -1,7 +1,5 @@
-services:
-  - type: web
-    name: plant-disease-predictor
-    env: python
-    plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: python app.py
+Flask
+tensorflow
+pillow
+numpy
+huggingface_hub
