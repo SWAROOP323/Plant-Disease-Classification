@@ -2,9 +2,23 @@ import gradio as gr
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras.preprocessing import image
+import os
+import requests
 
-# Load your trained model
-model = tf.keras.models.load_model("plant_disease_resnet.keras")
+# Model file & Hugging Face URL
+MODEL_PATH = "plant_disease_resnet.keras"
+MODEL_URL = "https://huggingface.co/spaces/SWAROOP323/plant-disease-predictor/resolve/main/plant_disease_resnet.keras"
+
+# Download model if not present
+if not os.path.exists(MODEL_PATH):
+    print("Downloading model from Hugging Face...")
+    r = requests.get(MODEL_URL, stream=True)
+    with open(MODEL_PATH, "wb") as f:
+        for chunk in r.iter_content(chunk_size=8192):
+            f.write(chunk)
+
+# Load model
+model = tf.keras.models.load_model(MODEL_PATH)
 
 # Define class labels
 class_labels = [
@@ -25,20 +39,18 @@ class_labels = [
 def predict_disease(img):
     img = img.convert("RGB")
     img = img.resize((224, 224))
-    img_array = image.img_to_array(img)
-    img_array = img_array / 255.0
+    img_array = image.img_to_array(img) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
-
     prediction = model.predict(img_array)
     predicted_class = class_labels[np.argmax(prediction)]
     confidence = round(np.max(prediction) * 100, 2)
     return f"Prediction: {predicted_class}\nConfidence: {confidence}%"
 
-# Launch Gradio app
+# Gradio interface
 gr.Interface(
     fn=predict_disease,
     inputs=gr.Image(type="pil"),
     outputs="text",
-    title="🌿 Plant Disease Detector",
+    title="🌿 Plant Disease Detector using ResNet",
     description="Upload a plant leaf image to detect disease using a fine-tuned ResNet model."
-).launch(server_name="0.0.0.0", server_port=10000)
+).launch()
