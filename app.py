@@ -166,12 +166,13 @@ def create_interface():
     
     return interface
 
+# Create the interface
+interface = create_interface()
+
+# For direct Python execution
 if __name__ == "__main__":
     # Get port from environment variable (Render.com sets this)
     port = int(os.environ.get("PORT", 7860))
-    
-    # Create and launch the interface
-    interface = create_interface()
     
     # Launch with server configuration for Render.com
     interface.launch(
@@ -182,4 +183,7 @@ if __name__ == "__main__":
         show_error=True,        # Show errors to users
         quiet=False             # Show startup logs
     )
+
+# For WSGI servers like gunicorn (if needed)
+app = interface.app
 
