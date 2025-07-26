@@ -1,11 +1,19 @@
 import os
+import logging
+
+# Configure TensorFlow to use CPU only and suppress GPU warnings
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 import tensorflow as tf
 import numpy as np
 from flask import Flask, request, render_template_string, jsonify
 from flask_cors import CORS
 from PIL import Image
 import requests
-import logging
+
+# Force TensorFlow to use CPU only
+tf.config.set_visible_devices([], 'GPU')
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -67,7 +75,7 @@ def download_model():
     if not os.path.exists(MODEL_PATH):
         logger.info("Downloading model...")
         try:
-            response = requests.get(MODEL_URL, stream=True)
+            response = requests.get(MODEL_URL, stream=True, timeout=300)
             response.raise_for_status()
             
             with open(MODEL_PATH, "wb") as f:
@@ -83,8 +91,15 @@ def load_model():
     global model
     try:
         download_model()
+        logger.info("Loading model...")
         model = tf.keras.models.load_model(MODEL_PATH)
         logger.info("Model loaded successfully.")
+        
+        # Test prediction to ensure model works
+        test_input = np.random.random((1, 224, 224, 3))
+        _ = model.predict(test_input, verbose=0)
+        logger.info("Model test prediction successful.")
+        
     except Exception as e:
         logger.error(f"Error loading model: {e}")
         raise
@@ -182,6 +197,15 @@ HTML_PAGE = """
             border-radius: 5px;
             border-left: 4px solid #3498db;
         }
+        .status {
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
     </style>
 </head>
 <body>
@@ -190,6 +214,10 @@ HTML_PAGE = """
         <p style="text-align: center; color: #7f8c8d;">
             Upload an image of a plant leaf to detect diseases using AI
         </p>
+        
+        {% if model_status %}
+            <div class="status">{{ model_status }}</div>
+        {% endif %}
         
         <form method="post" enctype="multipart/form-data" class="upload-form">
             <div class="file-input">
@@ -231,10 +259,13 @@ def index():
     prediction = None
     confidence = None
     error = None
+    model_status = "✅ Model loaded and ready" if model is not None else "⚠️ Model not loaded"
     
     if request.method == "POST":
         try:
-            if 'file' not in request.files:
+            if model is None:
+                error = "Model is not loaded. Please try again later."
+            elif 'file' not in request.files:
                 error = "No file uploaded"
             else:
                 file = request.files['file']
@@ -246,7 +277,7 @@ def index():
                     processed_img = preprocess_image(img)
                     
                     # Make prediction
-                    predictions = model.predict(processed_img)
+                    predictions = model.predict(processed_img, verbose=0)
                     pred_class_idx = np.argmax(predictions, axis=1)[0]
                     confidence_score = float(np.max(predictions) * 100)
                     
@@ -262,12 +293,16 @@ def index():
     return render_template_string(HTML_PAGE, 
                                 prediction=prediction, 
                                 confidence=confidence, 
-                                error=error)
+                                error=error,
+                                model_status=model_status)
 
 @app.route("/api/predict", methods=["POST"])
 def api_predict():
     """API endpoint for predictions"""
     try:
+        if model is None:
+            return jsonify({"error": "Model not loaded"}), 503
+            
         if 'file' not in request.files:
             return jsonify({"error": "No file uploaded"}), 400
         
@@ -280,7 +315,7 @@ def api_predict():
         processed_img = preprocess_image(img)
         
         # Make prediction
-        predictions = model.predict(processed_img)
+        predictions = model.predict(processed_img, verbose=0)
         pred_class_idx = np.argmax(predictions, axis=1)[0]
         confidence_score = float(np.max(predictions) * 100)
         
@@ -300,7 +335,11 @@ def api_predict():
 @app.route("/health")
 def health_check():
     """Health check endpoint"""
-    return jsonify({"status": "healthy", "model_loaded": model is not None})
+    return jsonify({
+        "status": "healthy", 
+        "model_loaded": model is not None,
+        "tensorflow_version": tf.__version__
+    })
 
 @app.route("/classes")
 def get_classes():
@@ -309,11 +348,14 @@ def get_classes():
 
 # Initialize the model when the app starts
 try:
+    logger.info("Starting application...")
     load_model()
+    logger.info("Application startup complete.")
 except Exception as e:
     logger.error(f"Failed to load model on startup: {e}")
+    logger.info("Application will start without model. Model loading will be retried on first request.")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
+    logger.info(f"Starting Flask app on port {port}")
     app.run(host="0.0.0.0", port=port, debug=False)
-
