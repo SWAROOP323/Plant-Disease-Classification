@@ -1,9 +1,16 @@
 import os
 import logging
+import gc
 
-# Configure TensorFlow to use CPU only and suppress GPU warnings
+# Configure TensorFlow to use minimal memory and CPU only
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Suppress all TF logs except errors
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'false'
+os.environ['TF_GPU_ALLOCATOR'] = 'cuda_malloc_async'
+
+# Memory optimization settings
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+os.environ['TF_CPP_MAX_VLOG_LEVEL'] = '0'
 
 import tensorflow as tf
 import numpy as np
@@ -12,8 +19,10 @@ from flask_cors import CORS
 from PIL import Image
 import requests
 
-# Force TensorFlow to use CPU only
+# Configure TensorFlow for minimal memory usage
 tf.config.set_visible_devices([], 'GPU')
+tf.config.threading.set_inter_op_parallelism_threads(1)
+tf.config.threading.set_intra_op_parallelism_threads(1)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -25,7 +34,7 @@ MODEL_URL = "https://huggingface.co/spaces/SWAROOP323/plant-disease-predictor/re
 # Plant disease class labels (38 classes)
 class_labels = [
     "Apple___Apple_scab",
-    "Apple___Black_rot",
+    "Apple___Black_rot", 
     "Apple___Cedar_apple_rust",
     "Apple___healthy",
     "Blueberry___healthy",
@@ -65,10 +74,11 @@ class_labels = [
 ]
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)
 
-# Global model variable
+# Global model variable - will be loaded on first request
 model = None
+model_loading = False
 
 def download_model():
     """Download the model if it doesn't exist"""
@@ -86,35 +96,49 @@ def download_model():
             logger.error(f"Error downloading model: {e}")
             raise
 
-def load_model():
-    """Load the TensorFlow model"""
-    global model
-    try:
-        download_model()
-        logger.info("Loading model...")
-        model = tf.keras.models.load_model(MODEL_PATH)
-        logger.info("Model loaded successfully.")
+def load_model_lazy():
+    """Load the model only when needed (lazy loading)"""
+    global model, model_loading
+    
+    if model is not None:
+        return model
         
-        # Test prediction to ensure model works
-        test_input = np.random.random((1, 224, 224, 3))
-        _ = model.predict(test_input, verbose=0)
-        logger.info("Model test prediction successful.")
+    if model_loading:
+        return None
+        
+    try:
+        model_loading = True
+        logger.info("Starting lazy model loading...")
+        
+        download_model()
+        
+        # Force garbage collection before loading
+        gc.collect()
+        
+        logger.info("Loading TensorFlow model...")
+        model = tf.keras.models.load_model(MODEL_PATH)
+        
+        # Force garbage collection after loading
+        gc.collect()
+        
+        logger.info("Model loaded successfully.")
+        model_loading = False
+        return model
         
     except Exception as e:
         logger.error(f"Error loading model: {e}")
+        model_loading = False
         raise
 
 def preprocess_image(image):
     """Preprocess the image for model prediction"""
     try:
-        # Resize image to 224x224 (ResNet input size)
+        # Resize image to 224x224
         image = image.resize((224, 224))
-        # Convert to RGB if not already
         if image.mode != 'RGB':
             image = image.convert('RGB')
         # Convert to numpy array and normalize
-        image_array = np.array(image) / 255.0
-        # Add batch dimension
+        image_array = np.array(image, dtype=np.float32) / 255.0
         return np.expand_dims(image_array, axis=0)
     except Exception as e:
         logger.error(f"Error preprocessing image: {e}")
@@ -202,9 +226,21 @@ HTML_PAGE = """
             padding: 10px;
             margin: 10px 0;
             border-radius: 5px;
+        }
+        .status.ready {
             background-color: #d4edda;
             border: 1px solid #c3e6cb;
             color: #155724;
+        }
+        .status.loading {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .status.not-loaded {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
         }
     </style>
 </head>
@@ -216,7 +252,7 @@ HTML_PAGE = """
         </p>
         
         {% if model_status %}
-            <div class="status">{{ model_status }}</div>
+            <div class="status {{ status_class }}">{{ model_status }}</div>
         {% endif %}
         
         <form method="post" enctype="multipart/form-data" class="upload-form">
@@ -246,7 +282,7 @@ HTML_PAGE = """
         <div class="info">
             <h4>Supported Plants:</h4>
             <p>Apple, Blueberry, Cherry, Corn, Grape, Orange, Peach, Pepper, Potato, Raspberry, Soybean, Squash, Strawberry, Tomato</p>
-            <p><strong>Note:</strong> For best results, upload clear images of individual leaves with good lighting.</p>
+            <p><strong>Note:</strong> Model loads on first use. First prediction may take longer.</p>
         </div>
     </div>
 </body>
@@ -259,32 +295,48 @@ def index():
     prediction = None
     confidence = None
     error = None
-    model_status = "✅ Model loaded and ready" if model is not None else "⚠️ Model not loaded"
+    
+    # Determine model status
+    if model is not None:
+        model_status = "✅ Model ready"
+        status_class = "ready"
+    elif model_loading:
+        model_status = "⏳ Model loading..."
+        status_class = "loading"
+    else:
+        model_status = "💤 Model will load on first use"
+        status_class = "not-loaded"
     
     if request.method == "POST":
         try:
-            if model is None:
-                error = "Model is not loaded. Please try again later."
-            elif 'file' not in request.files:
+            if 'file' not in request.files:
                 error = "No file uploaded"
             else:
                 file = request.files['file']
                 if file.filename == '':
                     error = "No file selected"
                 elif file:
-                    # Process the uploaded image
-                    img = Image.open(file.stream)
-                    processed_img = preprocess_image(img)
-                    
-                    # Make prediction
-                    predictions = model.predict(processed_img, verbose=0)
-                    pred_class_idx = np.argmax(predictions, axis=1)[0]
-                    confidence_score = float(np.max(predictions) * 100)
-                    
-                    prediction = class_labels[pred_class_idx]
-                    confidence = f"{confidence_score:.1f}"
-                    
-                    logger.info(f"Prediction: {prediction}, Confidence: {confidence}%")
+                    # Load model if not already loaded
+                    current_model = load_model_lazy()
+                    if current_model is None:
+                        error = "Model is currently loading. Please try again in a moment."
+                    else:
+                        # Process the uploaded image
+                        img = Image.open(file.stream)
+                        processed_img = preprocess_image(img)
+                        
+                        # Make prediction
+                        predictions = current_model.predict(processed_img, verbose=0)
+                        pred_class_idx = np.argmax(predictions, axis=1)[0]
+                        confidence_score = float(np.max(predictions) * 100)
+                        
+                        prediction = class_labels[pred_class_idx]
+                        confidence = f"{confidence_score:.1f}"
+                        
+                        logger.info(f"Prediction: {prediction}, Confidence: {confidence}%")
+                        
+                        # Force garbage collection after prediction
+                        gc.collect()
                     
         except Exception as e:
             logger.error(f"Error processing request: {e}")
@@ -294,15 +346,13 @@ def index():
                                 prediction=prediction, 
                                 confidence=confidence, 
                                 error=error,
-                                model_status=model_status)
+                                model_status=model_status,
+                                status_class=status_class)
 
 @app.route("/api/predict", methods=["POST"])
 def api_predict():
     """API endpoint for predictions"""
     try:
-        if model is None:
-            return jsonify({"error": "Model not loaded"}), 503
-            
         if 'file' not in request.files:
             return jsonify({"error": "No file uploaded"}), 400
         
@@ -310,12 +360,17 @@ def api_predict():
         if file.filename == '':
             return jsonify({"error": "No file selected"}), 400
         
+        # Load model if not already loaded
+        current_model = load_model_lazy()
+        if current_model is None:
+            return jsonify({"error": "Model is loading, please try again"}), 503
+        
         # Process the uploaded image
         img = Image.open(file.stream)
         processed_img = preprocess_image(img)
         
         # Make prediction
-        predictions = model.predict(processed_img, verbose=0)
+        predictions = current_model.predict(processed_img, verbose=0)
         pred_class_idx = np.argmax(predictions, axis=1)[0]
         confidence_score = float(np.max(predictions) * 100)
         
@@ -326,6 +381,10 @@ def api_predict():
         }
         
         logger.info(f"API Prediction: {result}")
+        
+        # Force garbage collection after prediction
+        gc.collect()
+        
         return jsonify(result)
         
     except Exception as e:
@@ -338,6 +397,7 @@ def health_check():
     return jsonify({
         "status": "healthy", 
         "model_loaded": model is not None,
+        "model_loading": model_loading,
         "tensorflow_version": tf.__version__
     })
 
@@ -346,16 +406,7 @@ def get_classes():
     """Get all available class labels"""
     return jsonify({"classes": class_labels, "total": len(class_labels)})
 
-# Initialize the model when the app starts
-try:
-    logger.info("Starting application...")
-    load_model()
-    logger.info("Application startup complete.")
-except Exception as e:
-    logger.error(f"Failed to load model on startup: {e}")
-    logger.info("Application will start without model. Model loading will be retried on first request.")
-
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    logger.info(f"Starting Flask app on port {port}")
+    logger.info(f"Starting Flask app on port {port} with lazy model loading")
     app.run(host="0.0.0.0", port=port, debug=False)
