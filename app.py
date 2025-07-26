@@ -2,23 +2,17 @@ import gradio as gr
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras.preprocessing import image
+from huggingface_hub import hf_hub_download
 import os
-import requests
 
-# Model file & Hugging Face URL
-MODEL_PATH = "plant_disease_resnet.keras"
-MODEL_URL = "https://huggingface.co/spaces/SWAROOP323/plant-disease-predictor/resolve/main/plant_disease_resnet.keras"
+# Download model from Hugging Face if not exists
+model_path = hf_hub_download(
+    repo_id="SWAROOP323/plant-disease-predictor",
+    filename="plant_disease_resnet.keras"
+)
 
-# Download model if not present
-if not os.path.exists(MODEL_PATH):
-    print("Downloading model from Hugging Face...")
-    r = requests.get(MODEL_URL, stream=True)
-    with open(MODEL_PATH, "wb") as f:
-        for chunk in r.iter_content(chunk_size=8192):
-            f.write(chunk)
-
-# Load model
-model = tf.keras.models.load_model(MODEL_PATH)
+# Load the model
+model = tf.keras.models.load_model(model_path)
 
 # Define class labels
 class_labels = [
@@ -46,7 +40,7 @@ def predict_disease(img):
     confidence = round(np.max(prediction) * 100, 2)
     return f"Prediction: {predicted_class}\nConfidence: {confidence}%"
 
-# Gradio interface
+# Launch Gradio app
 gr.Interface(
     fn=predict_disease,
     inputs=gr.Image(type="pil"),
