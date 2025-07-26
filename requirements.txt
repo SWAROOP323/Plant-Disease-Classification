@@ -1,5 +1,5 @@
 Flask
-tensorflow
+tensorflow==2.15.0
 pillow
 numpy
 huggingface_hub
