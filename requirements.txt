@@ -1,5 +1,5 @@
-Flask
+Flask==3.1.1
+gunicorn
 tensorflow==2.15.0
-pillow
 numpy
-huggingface_hub
+pillow
