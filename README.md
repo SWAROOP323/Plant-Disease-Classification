@@ -24,6 +24,7 @@ This app leverages **fine-tuned deep learning models (ResNet & VGG)** to identif
 - `README.md` : Project documentation.  
 
 👉 Models are hosted on **Hugging Face**:  https://huggingface.co/spaces/SWAROOP323/plant-disease-predictor/tree/main
+
 This file is not present locally, it will be automatically downloaded from:
 - 🔗[`plant_disease_resnet.keras`](https://huggingface.co/spaces/SWAROOP323/plant-disease-predictor/resolve/main/plant_disease_resnet.keras)  
 - 🔗[`plant_disease_vgg_finetuned.keras`](https://huggingface.co/spaces/SWAROOP323/plant-disease-predictor/resolve/main/plant_disease_vgg_finetuned.keras)  
