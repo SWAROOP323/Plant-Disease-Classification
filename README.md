@@ -23,9 +23,9 @@ This app leverages **fine-tuned deep learning models (ResNet & VGG)** to identif
 - `requirements.txt` : Python dependencies.  
 - `README.md` : Project documentation.  
 
-👉 Models are hosted on **Hugging Face**:  
-- [`plant_disease_resnet.keras`](https://huggingface.co/spaces/SWAROOP323/plant-disease-predictor/resolve/main/plant_disease_resnet.keras)  
-- [`plant_disease_vgg_finetuned.keras`](https://huggingface.co/spaces/SWAROOP323/plant-disease-predictor/resolve/main/plant_disease_vgg_finetuned.keras)  
+👉 Models are hosted on **Hugging Face**:  https://huggingface.co/spaces/SWAROOP323/plant-disease-predictor/tree/main
+- plant_disease_resnet.keras: https://huggingface.co/spaces/SWAROOP323/plant-disease-predictor/resolve/main/plant_disease_resnet.keras
+- plant_disease_vgg_finetuned.keras: https://huggingface.co/spaces/SWAROOP323/plant-disease-predictor/resolve/main/plant_disease_vgg_finetuned.keras
 
 
 
