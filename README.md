@@ -1,53 +1,56 @@
-Plant Disease Classification
+# 🌱 Plant Disease Detector  
 
-This repository contains a plant disease detection application built with TensorFlow and Gradio. The application uses a fine-tuned ResNet model to identify various plant diseases from leaf images.
+🚀 An AI-powered application for detecting **plant diseases** from leaf images using **TensorFlow** and **Gradio**.  
+This tool leverages a **fine-tuned ResNet model** to identify plant diseases with high accuracy.  
 
-Features
+---
 
-•
-Disease Prediction: Upload a plant leaf image and get a prediction of the disease, along with a confidence score.
+## ✨ Features  
 
-•
-Web Interface: Easy-to-use web interface powered by Gradio for quick predictions.
+- ✅ **Disease Prediction** – Upload a plant leaf image and get:  
+   - Predicted disease name  
+   - Confidence score (%)  
 
-•
-Pre-trained Model: Utilizes a pre-trained ResNet model for accurate disease detection.
+- ✅ **Interactive Web Interface** – Simple & clean UI powered by **Gradio**.  
 
-Installation
+- ✅ **Pre-trained ResNet Model** – Ensures **highly accurate** predictions.  
 
-1.
-Clone the repository:
+---
 
-2.
-Create a virtual environment (recommended):
+## ▶️ Usage
 
-3.
-Install the required dependencies:
+1. Run the application: python app.py
 
-Usage
+2. Open your browser and go to 👉 http://127.0.0.1:7860
 
-1.
-Run the application:
+3. Upload a leaf image 🌿 to get a disease prediction 🧑‍🌾
 
-2.
-Open your web browser and navigate to the URL provided by Gradio (usually http://127.0.0.1:7860).
+##🧠 Model
 
-3.
-Upload a plant leaf image using the interface to get a disease prediction.
+Model File: plant_disease_resnet.keras
 
-Model
+This file is not present locally, it will be automatically downloaded from:
 
-The application uses a plant_disease_resnet.keras model. If the model file is not present locally, it will be automatically downloaded from the following Hugging Face Space:
+🔗 https://huggingface.co/spaces/SWAROOP323/plant-disease-predictor/resolve/main/plant_disease_resnet.keras
 
-https://huggingface.co/spaces/SWAROOP323/plant-disease-predictor/resolve/main/plant_disease_resnet.keras
 
-Contributing
+##🤝 Contributing
 
-Contributions are welcome! Please feel free to open issues or submit pull requests.
+Contributions are always welcome! 🎉
 
-Contact
+Open issues
 
-For any questions or suggestions, please contact.
-Manchala D V V S Swaroop
-swaroopmanchala323@gmail.com
+Submit pull requests
 
+Suggest new features
+
+
+##📬 Contact
+
+💡 For questions, suggestions, or collaborations, reach out:
+
+GitHub: https://github.com/SWAROOP323
+
+Email: swaroopmanchala323@gmail.com
+
+🔥 Happy Coding & Keep Growing 🌿🌎
