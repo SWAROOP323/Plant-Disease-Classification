@@ -25,7 +25,7 @@ This tool leverages a **fine-tuned ResNet model** to identify plant diseases wit
 
 3. Upload a leaf image 🌿 to get a disease prediction 🧑‍🌾
 
-#**🧠 Model**
+# **🧠 Model**
 
 Model File: plant_disease_resnet.keras
 
@@ -34,7 +34,7 @@ This file is not present locally, it will be automatically downloaded from:
 🔗 https://huggingface.co/spaces/SWAROOP323/plant-disease-predictor/resolve/main/plant_disease_resnet.keras
 
 
-#**🤝 Contributing**
+# **🤝 Contributing**
 
 Contributions are always welcome! 🎉
 
@@ -45,7 +45,7 @@ Submit pull requests
 Suggest new features
 
 
-#**📬 Contact**
+# **📬 Contact**
 
 💡 For questions, suggestions, or collaborations, reach out:
 
