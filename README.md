@@ -1,18 +1,34 @@
-# **🌱 Plant Disease Detector**
+# 🌱 **Plant Disease Detector**  
+
 🚀 An AI-powered application for detecting **plant diseases** from leaf images using **TensorFlow** and **Gradio**.  
-This tool leverages a **fine-tuned ResNet model** to identify plant diseases with high accuracy.  
+This app leverages **fine-tuned deep learning models (ResNet & VGG)** to identify plant diseases with high accuracy.  
 
+---
 
-
-# **✨ Features**
+# ✨ **Features**  
 
 - ✅ **Disease Prediction** – Upload a plant leaf image and get:  
-   - Predicted disease name  
-   - Confidence score (%)  
+  - Predicted disease name  
+  - Confidence score (%)  
 
-- ✅ **Interactive Web Interface** – Simple & clean UI powered by **Gradio**.  
+- ✅ **Interactive Web Interface** – Built with **Gradio** for easy use.  
 
-- ✅ **Pre-trained ResNet Model** – Ensures **highly accurate** predictions.  
+- ✅ **Pre-trained Models** – Utilizes **ResNet** and **VGG (fine-tuned)** models.  
+
+---
+
+# 📂 **Project Structure**  
+
+- `app.py` : Main Gradio application.  
+- `requirements.txt` : Python dependencies.  
+- `README.md` : Project documentation.  
+
+👉 Models are hosted on **Hugging Face**:  
+- [`plant_disease_resnet.keras`](https://huggingface.co/spaces/SWAROOP323/plant-disease-predictor/resolve/main/plant_disease_resnet.keras)  
+- [`plant_disease_vgg_finetuned.keras`](https://huggingface.co/spaces/SWAROOP323/plant-disease-predictor/resolve/main/plant_disease_vgg_finetuned.keras)  
+
+---
+
 
 
 
