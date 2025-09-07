@@ -1,4 +1,4 @@
-# 🌱 **Plant Disease Detector**  
+# 🌱 **Plant Disease Classification**  
 
 🚀 An AI-powered application for detecting **plant diseases** from leaf images using **TensorFlow** and **Gradio**.  
 This app leverages **fine-tuned deep learning models (ResNet & VGG)** to identify plant diseases with high accuracy.  
@@ -7,7 +7,7 @@ This app leverages **fine-tuned deep learning models (ResNet & VGG)** to identif
 
 # ✨ **Features**  
 
-- ✅ **Disease Prediction** – Upload a plant leaf image and get:  
+- ✅ **Disease Classification** – Upload a plant leaf image and get:  
   - Predicted disease name  
   - Confidence score (%)  
 
