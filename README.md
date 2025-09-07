@@ -1,4 +1,4 @@
- **🌱 Plant Disease Detector**
+# **🌱 Plant Disease Detector**
 
 🚀 An AI-powered application for detecting **plant diseases** from leaf images using **TensorFlow** and **Gradio**.  
 This tool leverages a **fine-tuned ResNet model** to identify plant diseases with high accuracy.  
