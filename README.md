@@ -3,7 +3,7 @@
 🚀 An AI-powered application for detecting **plant diseases** from leaf images using **TensorFlow** and **Gradio**.  
 This app leverages **fine-tuned deep learning models (ResNet & VGG)** to identify plant diseases with high accuracy.  
 
----
+
 
 # ✨ **Features**  
 
@@ -15,7 +15,7 @@ This app leverages **fine-tuned deep learning models (ResNet & VGG)** to identif
 
 - ✅ **Pre-trained Models** – Utilizes **ResNet** and **VGG (fine-tuned)** models.  
 
----
+
 
 # 📂 **Project Structure**  
 
@@ -26,9 +26,6 @@ This app leverages **fine-tuned deep learning models (ResNet & VGG)** to identif
 👉 Models are hosted on **Hugging Face**:  
 - [`plant_disease_resnet.keras`](https://huggingface.co/spaces/SWAROOP323/plant-disease-predictor/resolve/main/plant_disease_resnet.keras)  
 - [`plant_disease_vgg_finetuned.keras`](https://huggingface.co/spaces/SWAROOP323/plant-disease-predictor/resolve/main/plant_disease_vgg_finetuned.keras)  
-
----
-
 
 
 
